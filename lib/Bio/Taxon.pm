@@ -3,18 +3,19 @@ use Mojo::Base 'Mojo::EventEmitter', -base, -signatures, -async_await;
 use Mojo::Log;
 use Syntax::Keyword::Try;
 use List::Util qw(any);
-use Bio::Utils qw( time_in_miliseconds find_services read_config )
+use Bio::Utils qw( find_services read_config )
+use Time::HiRes qw(tv_interval);
+use namespace::autoclean;
 
+has config => sub { read_config };
 
 # set logging service
 has log => sub { state $log = Mojo::Log->new };
 
-has config => sub { read_config };
-
 # services list
 has services => sub {
     # find all services (modules) given the namespace
-    my $services = find_services( $namespace );
+    my $services = find_services( __PACKAGE__ . '::Services' );
 
     # load services modules
     return $services->grep( 
@@ -26,30 +27,18 @@ has services => sub {
 };
 
 # timeout limit in seconds
-has tm_limit => sub { 1 };
+has timeout => sub { 1 };
 
 #
 # async search using a partial term 
 #
-async sub search_partially( $self, $term ) {
+async sub search_term( $self, $term ) {
 
     foreach my $service ( $self->services->each ) {
-        my $start = time;
-        my $found = { service => $service->name, term => $term };
-
-        if ( my $res = $self->cache(from => $service)->get($term) ) {
-            @$found{qw(results cached response_time)} = ($res, 1, time_in_miliseconds($start));
-            $self->emit( found => $found );
-            next;
-        }
-
         try {
-            my $res = await $service->search_p($term)->timeout($self->tm_limit);
-            $found->{results} = $res->result->json;
-            $self->cache(from => $service)->save($term, $found);
-            $found->{response_time} = time_in_miliseconds($start);
-            $self->emit(found => $found);
-            $self->log->debug("got results for '$term' using '$service->name");
+            my $res = await $service->search_p($term)->timeout($self->timeout);
+            $self->emit(found => $service->req_details);
+            $self->log->debug("got results for '$term' using '$service->name'");
         } catch ( $e ) {
             $self->emit( error => $e );
             $self->log->error(qq{Error searching for "$term", on "$service->name", details: '$e'});
@@ -62,6 +51,7 @@ async sub search_partially( $self, $term ) {
 
 
 1;
+
 __END__
 
 =encoding utf-8
