@@ -1,0 +1,5 @@
+---
+disabled_services:
+  - Worms
+  - SibBR
+log_level: debug

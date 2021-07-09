@@ -1,7 +1,9 @@
 package Bio::Roles::Service;
-use Mojo::Base -role, -signatures;
-use Time::HiRes qw(gettimeofday);
+use Mojo::Base -base, -role, -signatures;
+use Time::HiRes qw(gettimeofday tv_interval);
+use Mojo::UserAgent;
 use Bio::Taxon::Cache;
+use namespace::autoclean;
 
 has name => sub { die 'name attribute for service is required' };
 has description => sub { '' }; # service optional description
@@ -13,14 +15,14 @@ has ua => sub { Mojo::UserAgent->new };
 # TODO: queue safe
 #has pending => sub { Mojo::Collection->new([]) };
 
-required qw( search_p );
+requires qw( search_p );
 
 # start timer during search
 before 'search_p' => sub($self, $term) {
     my $request = {
         service => $self->name,
         term => $term,
-        start_time => gettimeofday,
+        start_time => [gettimeofday],
     };
 
     #TODO: manage pending
@@ -46,7 +48,7 @@ around 'search_p' => sub($orig, $self, @args) {
             sub($res) {
                 $details->{ origin } = 'web-service';
                 $details->{ service_time } = tv_interval( $details->{ start_time } );
-                $details->{ results } = $res->results->json;
+                $details->{ results } = $res->result->json;
                 # save in cache
                 $self->cache->save($term, $res->results->json);
                 # manage pending -> remove
@@ -58,6 +60,5 @@ around 'search_p' => sub($orig, $self, @args) {
 
     return $p;
 };
-
 
 1;
