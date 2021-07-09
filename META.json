@@ -1,5 +1,5 @@
 {
-   "abstract" : "It's new $module",
+   "abstract" : "Searches throw diferent web services for animal scientific data.",
    "author" : [
       "Marco Arthur <arthurpbs@gmail.com>"
    ],
@@ -28,7 +28,8 @@
    "prereqs" : {
       "configure" : {
          "requires" : {
-            "Module::Build::Tiny" : "0.035"
+            "Module::Build::Tiny" : "0.035",
+            "perl" : "5.008_001"
          }
       },
       "develop" : {
@@ -42,7 +43,16 @@
       },
       "runtime" : {
          "requires" : {
-            "perl" : "5.008001"
+            "List::Util" : "0",
+            "Mojo::Base" : "0",
+            "Mojo::File" : "0",
+            "Mojo::Loader" : "0",
+            "Mojo::Log" : "0",
+            "Mojo::URL" : "0",
+            "Mojo::UserAgent" : "0",
+            "Syntax::Keyword::Try" : "0",
+            "YAML" : "0",
+            "namespace::autoclean" : "0"
          }
       },
       "test" : {

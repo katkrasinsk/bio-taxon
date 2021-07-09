@@ -7,6 +7,8 @@ use Bio::Utils qw( find_services read_config );
 use Time::HiRes qw(tv_interval);
 use namespace::autoclean;
 
+our $VERSION = "0.01";
+
 has config => sub { read_config };
 
 # set logging service
