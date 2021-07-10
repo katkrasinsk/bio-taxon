@@ -66,6 +66,17 @@
       }
    },
    "release_status" : "unstable",
+   "resources" : {
+      "bugtracker" : {
+         "web" : "https://github.com/katkrasinsk/bio-taxon/issues"
+      },
+      "homepage" : "https://github.com/katkrasinsk/bio-taxon",
+      "repository" : {
+         "type" : "git",
+         "url" : "git://github.com/katkrasinsk/bio-taxon.git",
+         "web" : "https://github.com/katkrasinsk/bio-taxon"
+      }
+   },
    "version" : "0.01",
    "x_serialization_backend" : "JSON::PP version 4.06",
    "x_static_install" : 1

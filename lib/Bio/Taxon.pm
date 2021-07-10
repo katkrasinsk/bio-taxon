@@ -47,9 +47,8 @@ async sub search_term( $self, $term ) {
             $self->emit(found => $service->req_details);
             $self->log->debug(sprintf "got results for '%s' using '%s'", $term, $service->name);
         } catch ( $e ) {
-            $self->emit(error => $e);
             $self->log->error(sprintf qq{Error searching for "%s", on "%s", details: '%s'}, $term, $service->name, "$e");
-            next;
+            $self->emit(error => $e);
         }
     }
 
