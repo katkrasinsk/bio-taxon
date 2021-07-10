@@ -50,7 +50,7 @@ around 'search_p' => sub($orig, $self, @args) {
                 $details->{ service_time } = tv_interval( $details->{ start_time } );
                 $details->{ results } = $res->result->json;
                 # save in cache
-                $self->cache->save($term, $res->results->json);
+                $self->cache->save($term, $res->result->json);
                 # manage pending -> remove
                 #$self->pending->remove($p);
                 return $details->{ results };

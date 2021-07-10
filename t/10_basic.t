@@ -7,7 +7,10 @@ $b->on(
     found => sub {
         my (undef, $res) = @_;
         ok $res, 'found result';
-        note explain $res;
+        isa_ok $res, 'HASH';
+
+        is_deeply [sort keys %$res], [sort qw(term service service_time start_time results origin)];
+        #note explain $res;
     }
 );
 
@@ -16,8 +19,7 @@ subtest 'basic api tests' => sub {
 
     $b->search_term($animal)->then(
         sub {
-            ok 1, 'complete the search';
-            #note explain @_;
+            ok @_ > 0, 'got total #result ' . @_;
         }
     )->catch(
         sub {

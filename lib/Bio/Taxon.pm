@@ -3,13 +3,15 @@ use Mojo::Base 'Mojo::EventEmitter', -base, -signatures, -async_await;
 use Mojo::Log;
 use Syntax::Keyword::Try;
 use List::Util qw(any);
-use Bio::Utils qw( find_services read_config );
+use Bio::Utils qw(find_services read_config);
 use Time::HiRes qw(tv_interval);
+use Safe::Isa;
 use namespace::autoclean;
 
 our $VERSION = "0.01";
 
-has config => sub { read_config };
+# config read only once
+has config => sub ($self) { state $config = read_config; };
 
 # set logging service
 has log => sub { state $log = Mojo::Log->new->level(shift->config->{log_level}) };
@@ -25,11 +27,11 @@ has services => sub ($self) {
             my $service = $_;
             any { !($_ eq $service->name) } @{ $self->config->{disabled_services} || [] }
         }
-    )->each( sub { $_->new } );
+    )->each( sub { $_ } );
 };
 
 # timeout limit in seconds
-has timeout => sub { 2 };
+has timeout => sub { 4 };
 
 #
 # async search using a partial term 
@@ -41,7 +43,7 @@ async sub search_term( $self, $term ) {
     foreach my $service ( $self->services->each ) {
         try {
             my $res = await $service->search_p($term)->timeout($self->timeout);
-            push @res, $res->result->json;
+            push @res, $res->$_can('result') ? $res->result->json : $res;
             $self->emit(found => $service->req_details);
             $self->log->debug(sprintf "got results for '%s' using '%s'", $term, $service->name);
         } catch ( $e ) {
@@ -54,7 +56,6 @@ async sub search_term( $self, $term ) {
     return @res;
 }
 
-
 1;
 
 __END__
@@ -63,7 +64,7 @@ __END__
 
 =head1 NAME
 
-Bio::Taxon - Searches throw diferent web services for animal scientific data.
+Bio::Taxon - Searches through different web services for animal scientific taxa data.
 
 =head1 SYNOPSIS
 
@@ -75,7 +76,7 @@ Bio::Taxon - Searches throw diferent web services for animal scientific data.
 
 =head1 DESCRIPTION
 
-Bio::Taxon is module to search various scientific api information about animals
+Bio::Taxon is module to search various scientific Web API about animals data
 given species name.
 
 =head1 LICENSE
