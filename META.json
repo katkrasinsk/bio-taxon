@@ -1,5 +1,5 @@
 {
-   "abstract" : "Searches throw diferent web services for animal scientific data.",
+   "abstract" : "Searches through different web services for animal scientific taxa data.",
    "author" : [
       "Marco Arthur <arthurpbs@gmail.com>"
    ],
@@ -50,6 +50,7 @@
             "Mojo::Log" : "0",
             "Mojo::URL" : "0",
             "Mojo::UserAgent" : "0",
+            "Safe::Isa" : "0",
             "Syntax::Keyword::Try" : "0",
             "YAML" : "0",
             "namespace::autoclean" : "0"
@@ -57,7 +58,10 @@
       },
       "test" : {
          "requires" : {
-            "Test::More" : "0.98"
+            "DDP" : "0",
+            "Test::More" : "0.98",
+            "perl" : "5.028",
+            "strictures" : "2"
          }
       }
    },

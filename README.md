@@ -1,6 +1,6 @@
 # NAME
 
-Bio::Taxon - Searches throw diferent web services for animal scientific data.
+Bio::Taxon - Searches through different web services for animal scientific taxa data.
 
 # SYNOPSIS
 
@@ -12,7 +12,7 @@ Bio::Taxon - Searches throw diferent web services for animal scientific data.
 
 # DESCRIPTION
 
-Bio::Taxon is module to search various scientific api information about animals
+Bio::Taxon is module to search various scientific Web API about animals data
 given species name.
 
 # LICENSE
