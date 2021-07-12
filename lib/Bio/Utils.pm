@@ -9,9 +9,8 @@ require Exporter;
 our @ISA = qw(Exporter);
 
 # config order to be read
-our @Conf = map {
-    my $f = Mojo::File->new($_) if $_; 
-} ( $ENV{TAXON_CONF}, qw(./taxon.yml ~/.taxon.yml) );
+our @Conf = map { Mojo::File->new($_) }
+grep { $_ } ( $ENV{TAXON_CONF}, qw(./taxon.yml ~/.taxon.yml) );
 
 our @EXPORT_OK = qw( find_services read_config );
 

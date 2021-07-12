@@ -19,22 +19,15 @@ has log => sub { state $log = Mojo::Log->new->level(shift->config->{log_level}) 
 # services list
 has services => sub ($self) {
     # find all services (modules) given the namespace
-    my $services = find_services( __PACKAGE__ . '::Services' );
-
-    # load services modules
-    return $services->grep( 
-        sub {  
-            my $service = $_;
-            any { !($_ eq $service->name) } @{ $self->config->{disabled_services} || [] }
-        }
-    )->each( sub { $_ } );
+    # TODO: filter disabled from config
+    return find_services( __PACKAGE__ . '::Services' );
 };
 
 # timeout limit in seconds
 has timeout => sub { 4 };
 
 #
-# async search using a partial term 
+# searchs without concurrency
 #
 async sub search_term( $self, $term ) {
     $self->log->debug('begin searching');
@@ -42,6 +35,7 @@ async sub search_term( $self, $term ) {
 
     foreach my $service ( $self->services->each ) {
         try {
+            # this prevents concurrency, we await each search
             my $res = await $service->search_p($term)->timeout($self->timeout);
             push @res, $res->$_can('result') ? $res->result->json : $res;
             $self->emit(found => $service->req_details);
@@ -51,6 +45,35 @@ async sub search_term( $self, $term ) {
             $self->emit(error => $e);
         }
     }
+
+    return @res;
+}
+
+#
+# Search $term in all services concurrently
+#
+async sub search_concurrently( $self, $term ) {
+    $self->log->debug("concurrently searching for '$term'");
+
+    my @p = $self->services->map( 
+        sub ($service) { 
+            $service->search_p($term)->timeout($self->timeout)
+            ->then( sub{ $self->emit( found => $service->req_details ) })
+            ->catch(
+                sub($e) {
+                    $self->log->error(
+                        sprintf qq{Error searching for "%s", on "%s", details: '%s'},
+                        $term, $service->name, "$e"
+                    );
+                    # Should we emit error ?
+                    # $self->emit(error => $e);
+                }
+            );
+        }
+    )->@*;
+
+    # start concurrently search in all services
+    my @res = await Mojo::Promise->all_settled(@p);
 
     return @res;
 }

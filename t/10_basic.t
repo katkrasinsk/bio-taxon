@@ -7,12 +7,14 @@ $b->log->level('fatal'); # make test silent
 
 subtest 'check services' => sub {
     isa_ok $b->services, 'Mojo::Collection', "services set";
-    ok $b->services->size > 0, 'Has at least one service implemented';
+    my $size = $b->services->size > 0;
+    ok $size > 0, "Has total services implemented of $size";
     #TODO: check it implements Service Role
 };
 
-subtest 'find terms' => sub {
+subtest 'find terms concurrently' => sub {
     plan skip_all => 'set TEST_ONLINE to enable it' unless $ENV{TEST_ONLINE};
+    $b->timeout(10); #set sufficient big timeout
     my $cb = sub {
         my (undef, $res) = @_;
         ok $res, 'have a result';
@@ -23,14 +25,16 @@ subtest 'find terms' => sub {
         [sort keys %$res],
         [sort qw(term service service_time start_time results origin)],
         "hash structure for results is ok" or note explain $res;
+        delete $res->{results};
+        note explain $res;
     };
 
     $b->on( found => $cb );
     my $animal = 'larus dominicanus';
 
-    $b->search_term($animal)->then(
+    $b->search_concurrently($animal)->then(
         sub {
-            ok @_ > 0, 'got total #result ' . @_;
+            ok @_ > 0, 'got total results: ' . @_;
         }
     )->catch(
         sub {
@@ -43,7 +47,7 @@ subtest 'find terms' => sub {
 
 subtest 'timeout' => sub {
     local $SIG{__WARN__} = sub { }; # silence warnings
-    $b->timeout(0); # force timeout
+    $b->timeout(0.01); # force timeout
     my $animal = 'lobodon';
     $b->search_term($animal)->then(
         sub {
