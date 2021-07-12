@@ -5,9 +5,10 @@ Bio::Taxon - Searches through different web services for animal scientific taxa 
 # SYNOPSIS
 
     use Bio::Taxon;
-    my $promises = Bio::Taxon->new->search_term('larus dominicanus');
+    my $bt = Bio::Taxon->new(timeout => 5);
     my @res;
-    $promises->each( sub { $_->then( sub { push @res, shift } } );
+    $bt->on( found => sub { push @res, $_[1] } );
+    $bt->search_concurrently('egretta thula')->wait;
     say @res;
 
 # DESCRIPTION
