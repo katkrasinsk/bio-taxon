@@ -2,5 +2,8 @@ Revision history for Perl extension Bio-Taxon
 
 {{$NEXT}}
 
+0.01 2021-07-12T13:43:55Z
+
+    - improve docs and tests
     - original version
 
