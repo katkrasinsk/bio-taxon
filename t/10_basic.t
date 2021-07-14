@@ -8,10 +8,10 @@ my $b = Bio::Taxon->new->tap( sub { $_->log->level('fatal') } );
 subtest 'check all services' => sub {
     isa_ok $b->services, 'Mojo::Collection', "services set";
     my $size = $b->services->size;
-    ok $size == 2, "Has total services implemented of $size";
+    ok $size == 3, "Has total services implemented of $size";
     is_deeply 
-            [ @{$b->services->map( sub { $_->name } )} ],
-            [ qw(GBIF WoRMS) ], 'Services correct name';
+            [ sort @{$b->services->map( sub { $_->name } )} ],
+            [ sort qw(GBIF WoRMS WikiAves) ], 'Services correct name';
 };
 
 subtest 'find terms concurrently' => sub {
