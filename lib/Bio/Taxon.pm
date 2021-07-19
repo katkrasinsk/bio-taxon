@@ -2,10 +2,9 @@ package Bio::Taxon;
 use Mojo::Base 'Mojo::EventEmitter', -base, -signatures, -async_await;
 use Mojo::Log;
 use Syntax::Keyword::Try;
-use List::Util qw(any);
 use Bio::Utils qw(find_services read_config);
 use Time::HiRes qw(tv_interval);
-use Safe::Isa;
+use List::Util qw(any);
 use namespace::autoclean;
 
 our $VERSION = "0.01";
@@ -14,40 +13,27 @@ our $VERSION = "0.01";
 has config => sub ($self) { state $config = read_config; };
 
 # set logging service
-has log => sub { state $log = Mojo::Log->new->level(shift->config->{log_level}) };
+has log => sub { state $log = Mojo::Log->new->level(shift->config->{log_level}) || 'debug' };
 
 # services list
-has services => sub ($self) {
-    # find all services (modules) given the namespace
-    # TODO: filter disabled from config
+has _all => sub ($self) {
     return find_services( __PACKAGE__ . '::Services' );
+};
+
+has enabled => sub ($self) {
+    return $self->_all->map('name')->to_array;
+};
+
+has services => sub ($self) {
+    $self->_all->grep( 
+        sub($e) { 
+            any { $_ eq $e->name } $self->enabled->@*
+        }
+    );
 };
 
 # timeout limit in seconds
 has timeout => sub { 4 };
-
-#
-# searchs without concurrency
-#
-async sub search_term( $self, $term ) {
-    $self->log->debug('begin searching');
-    my @res;
-
-    foreach my $service ( $self->services->each ) {
-        try {
-            # this prevents concurrency, we await each search
-            my $res = await $service->search_p($term)->timeout($self->timeout);
-            push @res, $res->$_can('result') ? $res->result->json : $res;
-            $self->emit(found => $service->req_details);
-            $self->log->debug(sprintf "got results for '%s' using '%s'", $term, $service->name);
-        } catch ( $e ) {
-            $self->log->error(sprintf qq{Error searching for "%s", on "%s", details: '%s'}, $term, $service->name, "$e");
-            $self->emit(error => $e);
-        }
-    }
-
-    return @res;
-}
 
 #
 # Search $term in all services concurrently
@@ -58,7 +44,11 @@ async sub search_concurrently( $self, $term ) {
     my @p = $self->services->map( 
         sub ($service) { 
             $service->search_p($term)->timeout($self->timeout)
-            ->then( sub{ $self->emit( found => $service->req_details ) })
+            ->then( 
+                sub{ 
+                    $self->emit( found => $service->req_details );
+                    return $service->req_details;
+                })
             ->catch(
                 sub($e) {
                     $self->log->error(
@@ -73,9 +63,9 @@ async sub search_concurrently( $self, $term ) {
     )->@*;
 
     # start concurrently search in all services
-    my @res = await Mojo::Promise->all_settled(@p);
+    my $res = await Mojo::Promise->race(@p);
 
-    return @res;
+    return $res;
 }
 
 1;
