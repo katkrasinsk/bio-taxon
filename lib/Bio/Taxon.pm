@@ -13,7 +13,7 @@ our $VERSION = "0.01";
 has config => sub ($self) { state $config = read_config; };
 
 # set logging service
-has log => sub { state $log = Mojo::Log->new->level(shift->config->{log_level}) || 'debug' };
+has log => sub { state $log = Mojo::Log->new->level(shift->config->{log_level} || 'debug') };
 
 # services list
 has _all => sub ($self) {
@@ -55,15 +55,18 @@ async sub search_concurrently( $self, $term ) {
                         sprintf qq{Error searching for "%s", on "%s", details: '%s'},
                         $term, $service->name, "$e"
                     );
+                    my $details = $service->req_details;
+                    $details->{error} = $e;
                     # Should we emit error ?
                     # $self->emit(error => $e);
+                    return $details;
                 }
             );
         }
     )->@*;
 
     # start concurrently search in all services
-    my $res = await Mojo::Promise->race(@p);
+    my $res = await Mojo::Promise->any(@p);
 
     return $res;
 }

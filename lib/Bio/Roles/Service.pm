@@ -17,33 +17,33 @@ has ua => sub { Mojo::UserAgent->new };
 
 requires qw( search_p );
 
+#TODO: manage pending
 # start timer during search
 before 'search_p' => sub($self, $term) {
     my $request = {
         service => $self->name,
         term => $term,
         start_time => [gettimeofday],
+        results => [],
     };
 
-    #TODO: manage pending
     $self->req_details( $request );
 };
 
+# TODO: manage pending request
 # control cache/service search update
 around 'search_p' => sub($orig, $self, @args) {
     my $term = $args[0];
     my $p = $self->$orig(@args); # call original
     my $details = $self->req_details;
-    # TODO: manage pending request
-    # push @{$self->pending}, $p;
 
-    # check cache first
-    if ( my $res = $self->cache->get($term) ) {
+    # data from cache
+    if ( my $data = $self->cache->get($term) ) {
         $details->{ origin } = 'cached';
-        $details->{ results } = $res;
+        $details->{ results } = $data;
         $p->resolve( $details );
     } 
-    # get data and process: add metadata, normalize and save in cache
+    # data from web: add metadata, normalize and save in cache
     else {
         $p->then(
             sub($res) {
@@ -51,13 +51,15 @@ around 'search_p' => sub($orig, $self, @args) {
                 $details->{ service_time } = tv_interval( $details->{ start_time } ); # t - t0
                 delete $details->{start_time}; # discard t0
                 my $data = $details->{ results } = $self->normalize($res->result->json);
-                $self->cache->save($term, $data);
-                return $details->{ results };
+                if ( $data ) {
+                    $self->cache->save($term, $data);
+                }
             }
         )->catch(
             sub($err) {
-                warn "Error while processing data from " . $details->{ service };
-                warn "$err";
+                my $warn = sprintf "Error (%s), while processing data from %s", 
+                $err, $details->{ service };
+                Carp::carp($warn);
             }
         );
     }
@@ -65,6 +67,7 @@ around 'search_p' => sub($orig, $self, @args) {
     return $p;
 };
 
+# TODO: normalize data
 # default normalization: do nothing
 sub normalize( $self, $data ) {
     return $data;
