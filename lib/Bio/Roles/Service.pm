@@ -11,6 +11,7 @@ has req_details => sub { die 'No request done yet' };
 has cache => sub { Bio::Taxon::Cache->new };
 has base_url => sub { die 'Base url for web service is required' };
 has ua => sub { Mojo::UserAgent->new };
+has taxon => sub { die 'required Bio::Taxon' };
 
 # TODO: paralalle safe: manage queue
 #has pending => sub { Mojo::Collection->new([]) };
@@ -51,7 +52,7 @@ around 'search_p' => sub($orig, $self, @args) {
                 $details->{ service_time } = tv_interval( $details->{ start_time } ); # t - t0
                 delete $details->{start_time}; # discard t0
                 my $data = $details->{ results } = $self->normalize($res->result->json);
-                if ( $data ) {
+                if ( $data && $self->taxon->cache_enabled ) {
                     $self->cache->save($term, $data);
                 }
             }

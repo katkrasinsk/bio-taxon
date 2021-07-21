@@ -17,7 +17,7 @@ has log => sub { state $log = Mojo::Log->new->level(shift->config->{log_level} |
 
 # services list
 has _all => sub ($self) {
-    return find_services( __PACKAGE__ . '::Services' );
+    return find_services( $self );
 };
 
 has enabled => sub ($self) {
@@ -35,6 +35,9 @@ has services => sub ($self) {
 # timeout limit in seconds
 has timeout => sub { 4 };
 
+# caching enable: no by default
+has cache_enabled => sub { shift->config->{cache} || 0 };
+
 #
 # Search $term in all services concurrently
 #
@@ -46,8 +49,11 @@ async sub search_concurrently( $self, $term ) {
             $service->search_p($term)->timeout($self->timeout)
             ->then( 
                 sub{ 
-                    $self->emit( found => $service->req_details );
-                    return $service->req_details;
+                    my $details = $service->req_details;
+                    my $info = sprintf "Service %s responded", $details->{service};
+                    $self->log->debug($info);
+                    $self->emit( found => $details );
+                    return $details;
                 })
             ->catch(
                 sub($e) {

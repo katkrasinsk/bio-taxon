@@ -17,12 +17,12 @@ our @EXPORT_OK = qw( find_services read_config );
 #
 # find all service modules and load them
 #
-sub find_services ( $namespace ) {
+sub find_services ( $taxon ) {
     my @services;
-    for my $service (find_modules $namespace) {
+    for my $service (find_modules ref($taxon) . "::Services") {
         my $e = load_class($service);
         croak "Error loading $service: $e" if $e;
-        push @services, $service->new;
+        push @services, $service->new( taxon => $taxon );
     }
 
     return Mojo::Collection->new(@services);
