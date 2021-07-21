@@ -5,7 +5,6 @@ requires 'Mojo::Loader';
 requires 'Mojo::Log';
 requires 'Mojo::URL';
 requires 'Mojo::UserAgent';
-requires 'Safe::Isa';
 requires 'Syntax::Keyword::Try';
 requires 'YAML';
 requires 'namespace::autoclean';
