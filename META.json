@@ -50,7 +50,6 @@
             "Mojo::Log" : "0",
             "Mojo::URL" : "0",
             "Mojo::UserAgent" : "0",
-            "Safe::Isa" : "0",
             "Syntax::Keyword::Try" : "0",
             "YAML" : "0",
             "namespace::autoclean" : "0"
