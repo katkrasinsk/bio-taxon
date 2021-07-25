@@ -1,18 +1,18 @@
 package Bio::Taxon::Services::WoRMS;
 use Mojo::Base -base, -signatures, -async_await;
-use Carp;
+use Role::Tiny::With;
 use Mojo::URL;
 use namespace::autoclean;
 use constant URL => 'https://www.marinespecies.org/';
+
+with 'Bio::Roles::Service';
 
 #
 # singleton class
 # 
 sub new( $class, @args ) {
     return $class if ref( $class ) && $class->isa(__PACKAGE__);
-    my $o = $class->SUPER::new(@args)->with_roles('Bio::Roles::Service');
-    $o->name('WoRMS');
-    $o->base_url(Mojo::URL->new(URL));
+    my $o = $class->SUPER::new(@args, name => 'WoRMS', base_url => Mojo::URL->new(URL));
     return $o;
 }
 

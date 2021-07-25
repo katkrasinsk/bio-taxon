@@ -7,7 +7,7 @@ use namespace::autoclean;
 
 has name => sub { die 'name attribute for service is required' };
 has description => sub { '' }; # service optional description
-has req_details => sub { die 'No request done yet' };
+has req_details => sub { +{} };
 has cache => sub { Bio::Taxon::Cache->new };
 has base_url => sub { die 'Base url for web service is required' };
 has ua => sub { Mojo::UserAgent->new };
