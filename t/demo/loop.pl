@@ -1,4 +1,6 @@
+#!/usr/bin/env perl
 use strictures 2;
+use lib qw(./lib);
 use Bio::Taxon;
 use 5.028;
 use Term::Choose qw(choose);
