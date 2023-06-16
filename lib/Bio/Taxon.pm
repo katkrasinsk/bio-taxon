@@ -7,6 +7,7 @@ use Bio::Utils qw(find_services read_config);
 use Time::HiRes qw(tv_interval);
 use Safe::Isa;
 use namespace::autoclean;
+use constant TIMEOUT = $ENVS{BT_TIMEOUT} || 4;
 
 our $VERSION = "0.01";
 
@@ -24,7 +25,7 @@ has services => sub ($self) {
 };
 
 # timeout limit in seconds
-has timeout => sub { 4 };
+has timeout => sub { TIMEOUT };
 
 #
 # searchs without concurrency
