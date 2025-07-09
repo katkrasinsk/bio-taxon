@@ -8,7 +8,7 @@ use Time::HiRes qw(tv_interval);
 use Safe::Isa;
 use namespace::autoclean;
 
-our $VERSION = "0.01";
+our $VERSION = "0.02";
 
 # config read only once
 has config => sub ($self) { state $config = read_config; };
